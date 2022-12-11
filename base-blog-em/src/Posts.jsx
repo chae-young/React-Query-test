@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useQuery } from "react-query";
+import { useEffect, useState } from "react";
+import { useQuery, useQueryClient } from "react-query";
 
 import { PostDetail } from "./PostDetail";
 const maxPostPage = 10;
@@ -15,8 +15,21 @@ export function Posts() {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedPost, setSelectedPost] = useState(null);
 
+  const queryClient = useQueryClient()
+
+  //현재페이지가 변경사항이 생길때마다 실행
+  useEffect(()=>{
+    if(currentPage < maxPostPage) {
+      const nextPage = currentPage + 1
+      queryClient.prefetchQuery(['posts',nextPage], () => fetchPosts(nextPage))
+    }
+  },[currentPage, queryClient])
+
   // replace with useQuery
-  const {data,isError,isLoading,error} = useQuery(['posts',currentPage],() => fetchPosts(currentPage),{staleTime:2000});
+  const {data,isError,isLoading,error} = useQuery(['posts',currentPage],() => fetchPosts(currentPage),{
+    staleTime:2000,
+    keepPreviousData:true,//이전 데이터 유지
+  });
   if(isLoading) return <div>isLoading</div>
   if(isError) return <div>is Error!!{error.toString()}</div>
 
